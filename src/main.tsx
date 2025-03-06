@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import keycloak from "./keycloak";
@@ -11,7 +11,11 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
   useEffect(() => {
     keycloak.init({ onLoad: "check-sso", checkLoginIframe: false })
       .then(authenticated => {
-        setIsAuthenticated(authenticated);
+        if (!authenticated) {
+          keycloak.login(); // Automatically trigger login if not authenticated
+        } else {
+          setIsAuthenticated(true);
+        }
         setLoading(false);
       })
       .catch(error => {
@@ -22,16 +26,7 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
 
   if (loading) return <div>Loading...</div>;
 
-  if (!isAuthenticated) {
-    return (
-      <div>
-        <h2>Login Required</h2>
-        <button onClick={() => keycloak.login()}>Login with Keycloak</button>
-      </div>
-    );
-  }
-
-  return children;
+  return isAuthenticated ? children : <div>Redirecting to login...</div>;
 };
 
 const Root = () => {
